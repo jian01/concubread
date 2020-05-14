@@ -42,9 +42,9 @@ int main(int argc, char * argv[]) {
     }
   }
   if(debug_file){
-    print_debug(debug_file, CANTIDAD_RECEPCIONISTAS, recepcionistas);
-    print_debug(debug_file, CANTIDAD_PIZZEROS, pizzeros);
-    print_debug(debug_file, CANTIDAD_PANADEROS, panaderos);
+    debug(debug_file, CANTIDAD_RECEPCIONISTAS, recepcionistas);
+    debug(debug_file, CANTIDAD_PIZZEROS, pizzeros);
+    debug(debug_file, CANTIDAD_PANADEROS, panaderos);
   }
 
   // Comienzo inicialización de recepcionistas

@@ -3,10 +3,16 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <wchar.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-bool print_error(FILE* debug_file, const wchar_t* format, ...);
+#define debug(...) print_debug(__FILE__, __LINE__, (long)getpid(), __VA_ARGS__)
+#define info(...) print_info(__FILE__, __LINE__, (long)getpid(), __VA_ARGS__)
+#define error(...) print_error(__FILE__, __LINE__, (long)getpid(), __VA_ARGS__)
 
-bool print_info(FILE* debug_file, const wchar_t* format, ...);
+bool print_error(const char* filename, int line_no, long pid, FILE* debug_file, const wchar_t* format, ...);
 
-bool print_debug(FILE* debug_file, const wchar_t* format, ...);
+bool print_info(const char* filename, int line_no, long pid, FILE* debug_file, const wchar_t* format, ...);
+
+bool print_debug(const char* filename, int line_no, long pid, FILE* debug_file, const wchar_t* format, ...);
 #endif

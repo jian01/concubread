@@ -21,10 +21,10 @@
 int recepcionista(FILE* input_file, FILE* debug_file){
   char *buffer = (char *)malloc(MAXIMUM_BUFFER_LEN * sizeof(char));
   if(!buffer){
-    print_error(debug_file, ERROR_MALLOC, (long)getpid());
+    error(debug_file, ERROR_MALLOC, (long)getpid());
     return MALLOC_ERROR_EXIT_CODE; // TODO: salida correcta
   }
-  print_info(debug_file, INICIADO_RECEPCIONISTA, (long)getpid());
+  info(debug_file, INICIADO_RECEPCIONISTA);
   do {
     if(!acquire_write_lock(fileno(input_file))) return LOCK_ERROR_EXIT_CODE; // TODO: salida correcta
     fseek(input_file, 0, SEEK_CUR);
@@ -32,19 +32,19 @@ int recepcionista(FILE* input_file, FILE* debug_file){
     fflush(input_file);
     release_locked_file(fileno(input_file));
     if(!buffer && errno != 0){
-      print_error(debug_file, ERROR_LECTURA_RECEPCIONISTA, (long)getpid());
+      error(debug_file, ERROR_LECTURA_RECEPCIONISTA);
       return GETLINE_ERROR_EXIT_CODE; // TODO: salida correcta
     }
     if(buffer && strncmp(buffer, PIZZA_KEYWORD, 5) == 0){
-      print_debug(debug_file, RECEPCIONISTA_PIZZA_PEDIDA, (long)getpid());
+      debug(debug_file, RECEPCIONISTA_PIZZA_PEDIDA);
     } else if(buffer && strncmp(buffer, PAN_KEYWORD, 3) == 0){
-      print_debug(debug_file, RECEPCIONISTA_PAN_PEDIDO, (long)getpid());
+      debug(debug_file, RECEPCIONISTA_PAN_PEDIDO);
     } else if(buffer){
-      print_error(debug_file, ERROR_PEDIDO_NO_COMPRENDIDO, buffer, (long)getpid());
+      error(debug_file, ERROR_PEDIDO_NO_COMPRENDIDO, buffer);
     }
   } while(buffer);
 
-  print_debug(debug_file, RECEPCIONISTA_STOP, (long)getpid());
+  debug(debug_file, RECEPCIONISTA_STOP);
 
   if(debug_file){
     if(!fclose(debug_file)) return FREEING_RESOURCE_EXIT_CODE; // TODO: salida elegante
