@@ -2,6 +2,6 @@
 #define _RECEPCIONISTA
 #include <stdio.h>
 
-int recepcionista(const char* input_filename, const char* debug_filename);
+int recepcionista(FILE* input_file, FILE* debug_file);
 
 #endif

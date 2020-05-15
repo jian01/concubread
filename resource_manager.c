@@ -34,7 +34,7 @@ resource_tracker_t* global_resource_tracker = NULL;
 void resource_fatal_error(){
   fatal(NULL, FATAL_ERROR_MESSAGE);
   free_all_resources();
-  _exit(FATAL_ERROR_EXIT_CODE);
+  exit(FATAL_ERROR_EXIT_CODE);
 }
 
 void backup_errno(){
@@ -186,10 +186,6 @@ int safe_fclose(FILE *stream){
 
 pid_t safe_fork(){
   block_signals();
-  size_t actual_file_quantity = global_resource_tracker->file_quantity;
-  for(size_t i=0;i<actual_file_quantity;i++){
-    safe_fclose(global_resource_tracker->opened_files[0]);
-  }
   pid_t pid = fork();
   backup_errno();
   if(pid == -1){
