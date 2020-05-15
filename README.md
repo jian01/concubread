@@ -10,5 +10,5 @@ Uso:
 
 Ejemplo de corrida con valgrind:
 ```
-valgrind --leak-check=full --show-leak-kinds=all ./concubread 1 1 1 input debug
+valgrind --leak-check=full --show-leak-kinds=all ./concubread 4 4 4 input debug
 ```
