@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-bool acquire_write_lock(int filedes){
+bool acquire_exclusive_lock(int filedes){
   struct flock write_lock;
   write_lock.l_type = F_WRLCK;
   write_lock.l_whence = SEEK_SET;
@@ -11,6 +11,15 @@ bool acquire_write_lock(int filedes){
   int code = fcntl(filedes, F_SETLKW, &write_lock);
   if(code!=0) return false;
   return true;
+}
+
+bool acquire_exclusive_lock_nonblocking(int filedes){
+  struct flock write_lock;
+  write_lock.l_type = F_WRLCK;
+  write_lock.l_whence = SEEK_SET;
+  write_lock.l_len = 0;
+  write_lock.l_start = 0;
+  return fcntl(filedes, F_SETLK, &write_lock)==0;
 }
 
 bool acquire_read_lock(int filedes){

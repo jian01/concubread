@@ -1,7 +1,7 @@
 # concubread
 
 Compilacion:
-`gcc -Wall -pedantic -g -D_POSIX_SOURCE -std=c11 -o concubread *.c`
+`gcc -Wall -pedantic -g -D_POSIX_SOURCE -D_XOPEN_SOURCE=500 -std=c99 -o concubread *.c -lm`
 
 Uso:
 ```
@@ -10,5 +10,5 @@ Uso:
 
 Ejemplo de corrida con valgrind:
 ```
-valgrind --leak-check=full --show-leak-kinds=all ./concubread 4 4 4 input debug
+valgrind --leak-check=full --show-leak-kinds=all --undef-value-errors=no ./concubread 4 4 4 input debug
 ```
