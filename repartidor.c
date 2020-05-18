@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
+#include <signal.h>
 #include <unistd.h>
 #include <string.h>
 #include "resource_manager.h"
@@ -18,7 +18,7 @@
 #define LOCK_ERROR_EXIT_CODE -5
 
 
-int repartidor(FILE* repartidor_read_end, pedidos_count_t* shared_count, FILE* shared_count_lockfile){
+int repartidor(FILE* repartidor_read_end, pedidos_count_t* shared_count, FILE* shared_count_lockfile, pid_t especialista_masa_madre_pid){
   char *buffer = (char *)safe_malloc(DEFAULT_BUFFER_LEN * sizeof(char));
   size_t pizzas_procesadas = 0;
   size_t panes_procesados = 0;
@@ -51,6 +51,7 @@ int repartidor(FILE* repartidor_read_end, pedidos_count_t* shared_count, FILE* s
   } while(read_result);
 
   debug(REPARTIDOR_STOP, pizzas_procesadas, panes_procesados);
+  kill(especialista_masa_madre_pid, SIGUSR1);
 
   free_all_resources();
   return 0;

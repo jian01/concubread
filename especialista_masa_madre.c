@@ -17,7 +17,9 @@
 #define GETLINE_ERROR_EXIT_CODE -3
 #define FREEING_RESOURCE_EXIT_CODE -4
 #define LOCK_ERROR_EXIT_CODE -5
-#define SIGNAL_IGNORE_ERROR_EXIT_CODE -6
+#define SIGNAL_SET_ERROR_EXIT_CODE -6
+
+
 
 void alimentar_masa_madre(size_t* masas_madres_por_etapa){
   sleep(TIEMPO_ALIMENTAR_MASA_MADRE);
@@ -28,12 +30,17 @@ void alimentar_masa_madre(size_t* masas_madres_por_etapa){
   masas_madres_por_etapa[0] = 0;
 }
 
+void sigusr1_handler(){
+  debug(ESPECIALISTA_STOP);
+  free_all_resources();
+  exit(0);
+}
+
 int especialista_masa_madre(size_t* shared_especialista_pedidos, FILE* shared_especialista_pedidos_lock,
   FILE* especialista_masas_write_end){
-  sigset_t mask;
-  sigemptyset(&mask);
-  sigaddset(&mask, SIGPIPE);
-  if(sigprocmask(SIG_SETMASK, &mask, NULL)) fatal_error_abort(FATAL_ERROR_SIGPIPE_IGNORE, SIGNAL_IGNORE_ERROR_EXIT_CODE);
+  if(signal(SIGUSR1, sigusr1_handler) == SIG_ERR){
+    fatal_error_abort(FATAL_SIGNAL_SET, SIGNAL_SET_ERROR_EXIT_CODE);
+  }
   char* buffer = (char *)safe_malloc(DEFAULT_BUFFER_LEN * sizeof(char));
   size_t masas_madres_por_etapa[ETAPAS_MASA_MADRE];
   size_t por_entregar = 0;
@@ -47,9 +54,8 @@ int especialista_masa_madre(size_t* shared_especialista_pedidos, FILE* shared_es
     debug(ALIMENTANDO_MASA_MADRE, masas_madres_por_etapa[0], masas_madres_por_etapa[ETAPAS_MASA_MADRE-1]);
     alimentar_masa_madre(masas_madres_por_etapa);
     debug(MASA_MADRE_ALIMENTADA, masas_madres_por_etapa[ETAPAS_MASA_MADRE-1]);
-    if(masas_madres_por_etapa[ETAPAS_MASA_MADRE-1] > 0){
+    if(por_entregar > 0 && masas_madres_por_etapa[ETAPAS_MASA_MADRE-1] > 0){
       int write_result = write(fileno(especialista_masas_write_end), MASA_KEYWORD, DEFAULT_BUFFER_LEN);
-      if(write_result < 0 && errno==EPIPE) break;
       if(write_result > 0){
         debug(ENTREGANDO_MASA_MADRE);
         por_entregar--;
@@ -69,7 +75,7 @@ int especialista_masa_madre(size_t* shared_especialista_pedidos, FILE* shared_es
     release_locked_file(fileno(shared_especialista_pedidos_lock));
   }
 
-  debug(ESPECIALISTA_STOP, entregadas);
+  debug(ESPECIALISTA_STOP);
 
   free_all_resources();
   return 0;

@@ -40,7 +40,7 @@
   #define ESPECIALISTA_MASA_MADRE_ERROR_AL_ENTREGAR L"👨‍🔬🌾 No se pudo entregar una masa madre"
   #define ALIMENTANDO_MASA_MADRE L"👨‍🔬🌾 Por alimentar masa madre, hay %zu masas nuevas y %zu masas listas"
   #define MASA_MADRE_ALIMENTADA L"👨‍🔬🌾 Masa madre alimentada, hay %zu listas"
-  #define ESPECIALISTA_STOP L"👨‍🔬🌾🛑 No se encontraron más trabajos pendientes, %zu masas entregadas"
+  #define ESPECIALISTA_STOP L"👨‍🔬🌾🛑 No se encontraron más trabajos pendientes"
   // Repartidor logs
   #define INICIANDO_REPARTIDOR L"🏍️ Iniciando repartidor"
   #define REPARTIDOR_RECIBIENDO_PAN L"🏍️ Despachando pan (pedido número %d) del maestro panadero 💲"
@@ -65,4 +65,5 @@
   #define FATAL_ERROR_SHARED_MEMORY "Error fatal al reservar memoria compartida"
   #define FATAL_ERROR_LOCKFILE "Error al crear un lockfile"
   #define FATAL_ERROR_SIGPIPE_IGNORE "Error fatal al intentar ignorar SIGPIPE"
+  #define FATAL_SIGNAL_SET "Error fatal al intentar setear un signal handler"
 #endif

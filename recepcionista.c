@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
 #include <errno.h>
+#include <signal.h>
 #include "lock_utils.h"
 #include "debug_utils.h"
 #include "panic_utils.h"
