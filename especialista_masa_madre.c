@@ -75,7 +75,7 @@ int especialista_masa_madre(size_t* shared_especialista_pedidos, FILE* shared_es
     release_locked_file(fileno(shared_especialista_pedidos_lock));
   }
 
-  debug(ESPECIALISTA_STOP);
+  info(ESPECIALISTA_STOP);
 
   free_all_resources();
   return 0;

@@ -98,7 +98,7 @@ int recepcionista(FILE* pizzero_write_end, FILE* panadero_write_end, FILE* input
     }
     release_locked_file(fileno(shared_count_lockfile));
   } while(aux_buffer || shared_count->pizzas.por_ordenar || shared_count->pizzas.por_ordenar);
-  debug(RECEPCIONISTA_STOP, pizzas_procesadas, panes_procesados);
+  info(RECEPCIONISTA_STOP, pizzas_procesadas, panes_procesados);
 
   free_all_resources();
   return 0;

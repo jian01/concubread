@@ -38,6 +38,8 @@
 
 
 int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
+  info(INICIANDO_GERENTE);
+
   FILE* repartidor_pipes[2];
   FILE* pizzero_pipes[2];
   FILE* panadero_pipes[2];
@@ -72,6 +74,8 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
   pid_t repartidor_pid;
   pid_t especialista_masa_madre_pid;
 
+  info(CONTRATANDO_ESPECIALISTA_MASA_MADRE);
+
   // Inicializo especialista masa madre
   especialista_masa_madre_pid = safe_fork();
   if(especialista_masa_madre_pid==0){
@@ -85,6 +89,8 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
     return especialista_masa_madre(shared_especialista_pedidos, shared_especialista_pedidos_lock, especialista_masa[1]);
   }
 
+  info(CONTRATANDO_REPARTIDOR);
+
   // Inicializo repartidor
   repartidor_pid = safe_fork();
   if(repartidor_pid==0){
@@ -97,6 +103,8 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
     if(safe_fclose(especialista_masa[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
     return repartidor(repartidor_pipes[0], shared_count, shared_count_lockfile, repartidor_pipe_rd_lockfile);
   }
+
+  info(CONTRATANDO_MAESTROS_PIZZEROS, pizzeros);
 
   // Comienzo inicializacion de maestros pizzeros
   for(int i=0;i<pizzeros;i++){
@@ -112,8 +120,10 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
     }
   }
 
+  info(CONTRATANDO_MAESTROS_PANADEROS, panaderos);
+
   // Comienzo inicializacion de maestros panaderos
-  for(int i=0;i<pizzeros;i++){
+  for(int i=0;i<panaderos;i++){
     pid_t pid = safe_fork();
     if(pid==0){
       if(safe_fclose(repartidor_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
@@ -125,6 +135,8 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
       shared_especialista_pedidos_lock, panadero_pipe_rd_lockfile, especialista_masa_rd_lockfile);
     }
   }
+
+  info(CONTRATANDO_RECECPIONISTAS, recepcionistas);
 
   // Comienzo inicialización de recepcionistas
   for(int i=0;i<recepcionistas;i++){
@@ -155,6 +167,8 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
     if(wpid == repartidor_pid) kill(especialista_masa_madre_pid, SIGUSR1);
   }
   if(errno != ECHILD) fatal_error_abort(FATAL_ERROR_WAIT, CHILD_WAIT_ERROR_EXIT_CODE);
+
+  info(CERRANDO_NEGOCIO);
 
   free_all_resources();
   return 0;

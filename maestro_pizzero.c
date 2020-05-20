@@ -77,7 +77,7 @@ int maestro_pizzero(FILE* pizzero_read_end, FILE* repartidor_write_end,
     }
   } while(read_result || por_entregar);
 
-  debug(MAESTRO_PIZZERO_STOP, entregadas);
+  info(MAESTRO_PIZZERO_STOP, entregadas);
 
   free_all_resources();
   return 0;

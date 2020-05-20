@@ -53,7 +53,7 @@ int repartidor(FILE* repartidor_read_end, pedidos_count_t* shared_count, FILE* s
     }
   } while(read_result);
 
-  debug(REPARTIDOR_STOP, pizzas_procesadas, panes_procesados);
+  info(REPARTIDOR_STOP, pizzas_procesadas, panes_procesados);
 
   free_all_resources();
   return 0;

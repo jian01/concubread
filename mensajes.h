@@ -10,6 +10,14 @@
   #define CANTIDAD_RECEPCIONISTAS L"🛎️ La cantidad de recepcionistas es %d"
   #define CANTIDAD_PIZZEROS L"👨‍🍳🍕 La cantidad de pizzeros es %d"
   #define CANTIDAD_PANADEROS L"👨‍🍳🍞 La cantidad de panaderos es %d"
+  // Gerente logs
+  #define INICIANDO_GERENTE L"👩‍💼 Iniciando gerente"
+  #define CONTRATANDO_ESPECIALISTA_MASA_MADRE L"👩‍💼 Contratando especialista de masa madre 👨‍🔬🌾"
+  #define CONTRATANDO_REPARTIDOR L"👩‍💼 Registrando negocio en Rappi 🏍️"
+  #define CONTRATANDO_MAESTROS_PIZZEROS L"👩‍💼 Contratando %d maestros pizzeros 👨‍🍳🍕"
+  #define CONTRATANDO_MAESTROS_PANADEROS L"👩‍💼 Contratando %d maestros panaderos 👨‍🍳🍞"
+  #define CONTRATANDO_RECECPIONISTAS L"👩‍💼 Contratando %d recepcionistas 🛎️"
+  #define CERRANDO_NEGOCIO L"👩‍💼 Negocio cerrado por hoy 📈💰"
   // Recepcionista logs
   #define INICIADO_RECEPCIONISTA L"🛎️ Iniciando recepcionista"
   #define RECEPCIONISTA_PIZZA_PEDIDA L"🛎️ Pedido por pizza recibido"
