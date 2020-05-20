@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include "debug_utils.h"
 #include "lock_utils.h"
+#include "resource_manager.h"
 #include "mensajes.h"
+#include "panic_utils.h"
 
 #define MAXIMUM_LOG_STRING_LEN 500
 #define FATAL_FORMAT_NOT_UNICODE ""FATAL_TAG_NOT_UNICODE""LOG_DATA_FORMAT"%s\n"
@@ -9,6 +11,8 @@
 #define ERROR_FORMAT L""ERROR_TAG""LOG_DATA_FORMAT"%ls\n"
 #define INFO_FORMAT L""INFO_TAG""LOG_DATA_FORMAT"%ls\n"
 #define DEBUG_FORMAT L""DEBUG_TAG""LOG_DATA_FORMAT"%ls\n"
+
+#define SIGNAL_RESTORE_FATAL -20
 
 
 FILE* debug_file = NULL;
@@ -36,6 +40,7 @@ void print_fatal(const char* filename, int line_no, long pid, const char* format
 }
 
 bool print_error(const char* filename, int line_no, long pid, const wchar_t* format, ...){
+  block_signals();
   if(!debug_file) return true;
   va_list args;
   va_start(args, format);
@@ -48,10 +53,12 @@ bool print_error(const char* filename, int line_no, long pid, const wchar_t* for
   fwprintf(debug_file, ERROR_FORMAT, filename, line_no, pid, formatted_message);
   fflush(debug_file);
   release_locked_file(fileno(debug_file));
+  if(!restore_signals()) fatal_error_abort(FATAL_IGNORE_SIGNAL, SIGNAL_RESTORE_FATAL);
   return true;
 }
 
 bool print_info(const char* filename, int line_no, long pid, const wchar_t* format, ...){
+  block_signals();
   if(!debug_file) return true;
   va_list args;
   va_start(args, format);
@@ -65,10 +72,12 @@ bool print_info(const char* filename, int line_no, long pid, const wchar_t* form
   fwprintf(debug_file, INFO_FORMAT, filename, line_no, pid, formatted_message);
   fflush(debug_file);
   release_locked_file(fileno(debug_file));
+  if(!restore_signals()) fatal_error_abort(FATAL_IGNORE_SIGNAL, SIGNAL_RESTORE_FATAL);
   return true;
 }
 
 bool print_debug(const char* filename, int line_no, long pid, const wchar_t* format, ...){
+  block_signals();
   if(!debug_file) return true;
   va_list args;
   va_start(args, format);
@@ -81,5 +90,6 @@ bool print_debug(const char* filename, int line_no, long pid, const wchar_t* for
   fwprintf(debug_file, DEBUG_FORMAT, filename, line_no, pid, formatted_message);
   fflush(debug_file);
   release_locked_file(fileno(debug_file));
+  if(!restore_signals()) fatal_error_abort(FATAL_IGNORE_SIGNAL, SIGNAL_RESTORE_FATAL);
   return true;
 }

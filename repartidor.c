@@ -18,7 +18,8 @@
 #define LOCK_ERROR_EXIT_CODE -5
 
 
-int repartidor(FILE* repartidor_read_end, pedidos_count_t* shared_count, FILE* shared_count_lockfile, pid_t especialista_masa_madre_pid){
+int repartidor(FILE* repartidor_read_end, pedidos_count_t* shared_count, FILE* shared_count_lockfile,
+                FILE* repartidor_pipe_rd_lockfile){
   char *buffer = (char *)safe_malloc(DEFAULT_BUFFER_LEN * sizeof(char));
   size_t pizzas_procesadas = 0;
   size_t panes_procesados = 0;
@@ -27,7 +28,9 @@ int repartidor(FILE* repartidor_read_end, pedidos_count_t* shared_count, FILE* s
   info(INICIANDO_REPARTIDOR);
   int read_result = 0;
   do {
+    if(!acquire_exclusive_lock(fileno(repartidor_pipe_rd_lockfile))) fatal_error_abort(FATAL_ACQUIRE_LOCK, LOCK_ERROR_EXIT_CODE);
     read_result = read(fileno(repartidor_read_end), buffer, DEFAULT_BUFFER_LEN);
+    release_locked_file(fileno(repartidor_pipe_rd_lockfile));
     if(read_result < 0) fatal_error_abort(FATAL_LECTURA, GETLINE_ERROR_EXIT_CODE);
     if(read_result > 0 && strncmp(buffer, PAN_KEYWORD, PAN_KEYWORD_LEN) == 0){
       int id_actual = atoi(buffer+PAN_KEYWORD_LEN);
@@ -51,7 +54,6 @@ int repartidor(FILE* repartidor_read_end, pedidos_count_t* shared_count, FILE* s
   } while(read_result);
 
   debug(REPARTIDOR_STOP, pizzas_procesadas, panes_procesados);
-  kill(especialista_masa_madre_pid, SIGUSR1);
 
   free_all_resources();
   return 0;

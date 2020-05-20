@@ -83,6 +83,7 @@ bool array_append_resize_if_needed(void** array, size_t* capacity, size_t quanti
   if(*capacity < quantity) return true;
   void* aux = realloc(*array, RESIZE_FACTOR*(*capacity)*size_of_element);
   if(!aux){
+    perror("array_append_resize_if_needed: realloc");
     return false;
   }
   *capacity *= RESIZE_FACTOR;
@@ -101,6 +102,7 @@ bool register_file_pointer(FILE* file){
 }
 
 bool initialize_resource_manager(){
+  block_signals();
   if(global_resource_tracker) return false;
   global_resource_tracker = malloc(sizeof(resource_tracker_t));
   if(!global_resource_tracker) return false;
@@ -108,6 +110,7 @@ bool initialize_resource_manager(){
   if(!global_resource_tracker->opened_files){
     free(global_resource_tracker);
     global_resource_tracker = NULL;
+    if(!restore_signals()) resource_fatal_error();
     return false;
   }
   global_resource_tracker->file_capacity = INITIAL_CAPACITY;
@@ -117,6 +120,7 @@ bool initialize_resource_manager(){
     free(global_resource_tracker->opened_files);
     free(global_resource_tracker);
     global_resource_tracker = NULL;
+    if(!restore_signals()) resource_fatal_error();
     return false;
   }
   global_resource_tracker->alloqued_capacity = INITIAL_CAPACITY;
@@ -127,6 +131,7 @@ bool initialize_resource_manager(){
     free(global_resource_tracker->alloqued);
     free(global_resource_tracker);
     global_resource_tracker = NULL;
+    if(!restore_signals()) resource_fatal_error();
     return false;
   }
   global_resource_tracker->child_capacity = INITIAL_CAPACITY;
@@ -139,6 +144,7 @@ bool initialize_resource_manager(){
     free(global_resource_tracker->alloqued);
     free(global_resource_tracker);
     global_resource_tracker = NULL;
+    if(!restore_signals()) resource_fatal_error();
     return false;
   }
   global_resource_tracker->shared_att_capacity = INITIAL_CAPACITY;
@@ -152,6 +158,7 @@ bool initialize_resource_manager(){
     free(global_resource_tracker->alloqued);
     free(global_resource_tracker);
     global_resource_tracker = NULL;
+    if(!restore_signals()) resource_fatal_error();
     return false;
   }
   global_resource_tracker->shared_mem_ids_capacity = INITIAL_CAPACITY;
@@ -161,7 +168,9 @@ bool initialize_resource_manager(){
     free_all_resources();
     global_resource_tracker = NULL;
     return false;
+    if(!restore_signals()) resource_fatal_error();
   }
+  if(!restore_signals()) resource_fatal_error();
   return true;
 }
 
@@ -171,6 +180,7 @@ void* safe_malloc(size_t size){
   void* memory = malloc(size);
   backup_errno();
   if(!memory){
+    perror("safe_malloc: malloc");
     if(!restore_signals()) resource_fatal_error();
     restore_errno();
     return NULL;
@@ -191,11 +201,18 @@ void* shared_malloc(size_t size, const char* shared_memory_file){
   if(!global_resource_tracker) return NULL;
   block_signals();
   key_t clave = ftok(shared_memory_file, SHARED_MEMORY_INT);
-  if(clave == -1) return NULL;
+  if(clave == -1){
+    perror("shared_malloc: ftok");
+    return NULL;
+  }
   int shmId = shmget(clave, size, 0644|IPC_CREAT);
-  if(shmId == -1) return NULL;
+  if(shmId == -1){
+    perror("shared_malloc: shmget");
+    return NULL;
+  }
   void* ptr = shmat(shmId,NULL,0);
   if ( ptr == (void *) -1 ) {
+    perror("shared_malloc: shmat");
     shmctl(shmId, IPC_RMID, NULL);
     return NULL;
   }
@@ -227,6 +244,7 @@ FILE* safe_fopen(const char *filename, const char *mode){
   FILE* file = fopen(filename, mode);
   backup_errno();
   if(!file){
+    perror("safe_fopen: fopen");
     if(!restore_signals()) resource_fatal_error();
     restore_errno();
     return NULL;
@@ -244,15 +262,17 @@ int fpipe(FILE* pipefile[2]){
   if(!pipefile) return -1;
   block_signals();
   int pipefd[2];
-  int pipe_result = pipe2(pipefd, O_DIRECT);
+  int pipe_result = pipe(pipefd);
   backup_errno();
   if(pipe_result != 0){
+    perror("fpipe: pipe");
     if(!restore_signals()) resource_fatal_error();
     restore_errno();
     return -1;
   }
   FILE* read = fdopen(pipefd[0], "r");
   if(!read){
+    perror("fpipe: read fdopen");
     close(pipefd[0]);
     close(pipefd[1]);
     if(!restore_signals()) resource_fatal_error();
@@ -266,6 +286,7 @@ int fpipe(FILE* pipefile[2]){
   }
   FILE* write = fdopen(pipefd[1], "w");
   if(!write){
+    perror("fpipe: write fdopen");
     fclose(read);
     close(pipefd[1]);
     if(!restore_signals()) resource_fatal_error();
@@ -285,13 +306,15 @@ int fpipe(FILE* pipefile[2]){
 
 FILE* create_lockfile(const char* name){
   block_signals();
-  int lockfile_fd = memfd_create(name, 0);
+  int lockfile_fd = open(name,O_CREAT|O_WRONLY,0777);
   if(lockfile_fd < 0){
+    perror("create_lockfile: open");
     if(!restore_signals()) resource_fatal_error();
     return NULL;
   }
-  FILE* lockfile = fdopen(lockfile_fd, "w+");
+  FILE* lockfile = fdopen(lockfile_fd, "w");
   if(!lockfile){
+    perror("create_lockfile: fdopen");
     close(lockfile_fd);
     if(!restore_signals()) resource_fatal_error();
     return NULL;
@@ -331,6 +354,7 @@ pid_t safe_fork(){
   pid_t pid = fork();
   backup_errno();
   if(pid == -1){
+    perror("safe_fork: fork");
     if(!restore_signals()) resource_fatal_error();
     restore_errno();
     return -1;

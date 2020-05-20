@@ -17,6 +17,7 @@
 #define GETLINE_ERROR_EXIT_CODE -3
 #define FREEING_RESOURCE_EXIT_CODE -4
 #define LOCK_ERROR_EXIT_CODE -5
+#define SPRINTF_ERROR_EXIT_CODE -30
 
 
 int recepcionista(FILE* pizzero_write_end, FILE* panadero_write_end, FILE* input_file,
@@ -54,7 +55,7 @@ int recepcionista(FILE* pizzero_write_end, FILE* panadero_write_end, FILE* input
     }
     if(!acquire_exclusive_lock(fileno(shared_count_lockfile))) fatal_error_abort(FATAL_ACQUIRE_LOCK, LOCK_ERROR_EXIT_CODE);
     if(shared_count->pizzas.por_ordenar > 0){
-      if(sprintf(buffer, "%s%d", PIZZA_KEYWORD, shared_count->cant_pedidos) < 0) fatal_error_abort(FATAL_ACQUIRE_LOCK, LOCK_ERROR_EXIT_CODE);
+      if(sprintf(buffer, "%s%d", PIZZA_KEYWORD, shared_count->cant_pedidos) < 0) fatal_error_abort(FATAL_SPRINTF, SPRINTF_ERROR_EXIT_CODE);
 
       shared_count->pizzas.por_ordenar--;
       int pedido_actual = shared_count->cant_pedidos;

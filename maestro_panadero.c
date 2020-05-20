@@ -16,11 +16,13 @@
 #define GETLINE_ERROR_EXIT_CODE -3
 #define FREEING_RESOURCE_EXIT_CODE -4
 #define LOCK_ERROR_EXIT_CODE -5
+#define SPRINTF_ERROR_EXIT_CODE -30
 
 
 int maestro_panadero(FILE* panadero_read_end, FILE* repartidor_write_end,
                     FILE* especialista_masas_read_end,
-                    size_t* shared_especialista_pedidos, FILE* shared_especialista_pedidos_lock){
+                    size_t* shared_especialista_pedidos, FILE* shared_especialista_pedidos_lock,
+                    FILE* panadero_pipe_rd_lockfile, FILE* especialista_masa_rd_lockfile){
   char* buffer = (char *)safe_malloc(DEFAULT_BUFFER_LEN * sizeof(char));
   int por_entregar_ids[MAXIMO_SIMULTANEO_POR_COCINERO];
   size_t por_entregar = 0;
@@ -32,7 +34,7 @@ int maestro_panadero(FILE* panadero_read_end, FILE* repartidor_write_end,
   int read_result = 0;
   do {
     if(por_entregar > 0){
-      if(sprintf(buffer, "%s%d", PAN_KEYWORD, por_entregar_ids[0]) < 0) fatal_error_abort(FATAL_ACQUIRE_LOCK, LOCK_ERROR_EXIT_CODE);
+      if(sprintf(buffer, "%s%d", PAN_KEYWORD, por_entregar_ids[0]) < 0) fatal_error_abort(FATAL_SPRINTF, SPRINTF_ERROR_EXIT_CODE);
       if(write(fileno(repartidor_write_end), buffer, DEFAULT_BUFFER_LEN) > 0){
         debug(ENTREGANDO_PAN, por_entregar_ids[0]);
         por_entregar--;
@@ -45,7 +47,9 @@ int maestro_panadero(FILE* panadero_read_end, FILE* repartidor_write_end,
       if(!acquire_exclusive_lock(fileno(shared_especialista_pedidos_lock))) fatal_error_abort(FATAL_ACQUIRE_LOCK, LOCK_ERROR_EXIT_CODE);
       *shared_especialista_pedidos = *shared_especialista_pedidos+1;
       release_locked_file(fileno(shared_especialista_pedidos_lock));
+      if(!acquire_exclusive_lock(fileno(especialista_masa_rd_lockfile))) fatal_error_abort(FATAL_ACQUIRE_LOCK, LOCK_ERROR_EXIT_CODE);
       read_result = read(fileno(especialista_masas_read_end), buffer, DEFAULT_BUFFER_LEN);
+      release_locked_file(fileno(especialista_masa_rd_lockfile));
       if(read_result < 0) fatal_error_abort(FATAL_LECTURA, GETLINE_ERROR_EXIT_CODE);
       if(read_result > 0 && strncmp(buffer, MASA_KEYWORD, MASA_KEYWORD_LEN) == 0){
         debug(COCINANDO_PAN, por_entregar_ids[0], TIEMPO_COCCION_PANADERO);
@@ -56,10 +60,12 @@ int maestro_panadero(FILE* panadero_read_end, FILE* repartidor_write_end,
         error(ERROR_MENSAJE_NO_COMPRENDIDO, buffer);
       }
     } else {
+      if(!acquire_exclusive_lock(fileno(panadero_pipe_rd_lockfile))) fatal_error_abort(FATAL_ACQUIRE_LOCK, LOCK_ERROR_EXIT_CODE);
       read_result = read(fileno(panadero_read_end), buffer, DEFAULT_BUFFER_LEN);
+      release_locked_file(fileno(panadero_pipe_rd_lockfile));
       if(read_result < 0) fatal_error_abort(FATAL_LECTURA, GETLINE_ERROR_EXIT_CODE);
       if(read_result > 0 && strncmp(buffer, PAN_KEYWORD, PAN_KEYWORD_LEN) == 0){
-        int id_actual = atoi(buffer+PIZZA_KEYWORD_LEN);
+        int id_actual = atoi(buffer+PAN_KEYWORD_LEN);
         debug(PIDIENDO_MASA_MADRE_PAN, id_actual);
         por_entregar_ids[por_entregar] = id_actual;
         por_conseguir_masa_madre++;

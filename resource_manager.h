@@ -22,4 +22,8 @@ pid_t safe_fork();
 
 void free_all_resources();
 
+bool block_signals();
+
+bool restore_signals();
+
 #endif
