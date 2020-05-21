@@ -8,6 +8,9 @@
 
 
 double random_uniform(double a, double b){
+  /*
+  Devuelve un sample de un número de una distribucion uniforme entre (a,b)
+  */
   srand( time(NULL) +clock()+random());
   double rand_num = (double)rand();
   double rand_uniform = rand_num/RAND_MAX;

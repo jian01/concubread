@@ -1,5 +1,8 @@
 #ifndef _MENSAJES
   #define _MENSAJES
+  /*
+  Macros de mensajes de log y errores
+  */
   #define DEBUG_TAG L"[🐞 DEBUG] "
   #define INFO_TAG L"[📋 INFO]  "
   #define ERROR_TAG L"[❌ ERROR] "

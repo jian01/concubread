@@ -1,5 +1,8 @@
 #ifndef _STOCK_TRACKING
   #define _STOCK_TRACKING
+  /*
+  Structs usados para llevar el stock de productos por etapas
+  */
   typedef struct stock_tracker {
     size_t por_ordenar;
     size_t por_entregar;

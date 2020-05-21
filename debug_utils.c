@@ -18,10 +18,17 @@
 FILE* debug_file = NULL;
 
 void set_debug_file(FILE* _debug_file){
+  /*
+  Setea el debug file a ser utilizado para imprimir los logs
+  */
   debug_file = _debug_file;
 }
 
 void print_fatal(const char* filename, int line_no, long pid, const char* format, ...){
+  /*
+  Funcion para imprimir un error fatal, imprime (si existe) al logfile y a stderr.
+  Registra la linea de codigo y el pid que la llamo
+  */
   va_list args;
   va_start(args, format);
 
@@ -40,6 +47,12 @@ void print_fatal(const char* filename, int line_no, long pid, const char* format
 }
 
 bool print_error(const char* filename, int line_no, long pid, const wchar_t* format, ...){
+  /*
+  Funcion para imprimir un error, imprime (si existe) al logfile.
+  Registra la linea de codigo y el pid que la llamo
+
+  Devuelve true si la escritura fue exitosa
+  */
   block_signals();
   if(!debug_file) return true;
   va_list args;
@@ -58,6 +71,12 @@ bool print_error(const char* filename, int line_no, long pid, const wchar_t* for
 }
 
 bool print_info(const char* filename, int line_no, long pid, const wchar_t* format, ...){
+  /*
+  Funcion para imprimir un mensaje de info, imprime (si existe) al logfile.
+  Registra la linea de codigo y el pid que la llamo
+
+  Devuelve true si la escritura fue exitosa
+  */
   block_signals();
   if(!debug_file) return true;
   va_list args;
@@ -77,6 +96,12 @@ bool print_info(const char* filename, int line_no, long pid, const wchar_t* form
 }
 
 bool print_debug(const char* filename, int line_no, long pid, const wchar_t* format, ...){
+  /*
+  Funcion para imprimir un log de debug, imprime (si existe) al logfile.
+  Registra la linea de codigo y el pid que la llamo
+
+  Devuelve true si la escritura fue exitosa
+  */
   block_signals();
   if(!debug_file) return true;
   va_list args;

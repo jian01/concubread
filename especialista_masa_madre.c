@@ -22,6 +22,13 @@
 
 
 void alimentar_masa_madre(size_t* masas_madres_por_etapa){
+  /*
+  Especialista de masa madre
+
+  El especialista de masa madre alimenta la masa periodicamente y a medida le piden masa, si tiene listas las entrega
+
+  Devuelve 0 si fue exitoso, otro numero en caso contrario. Termina exitosamente solo si le piden terminar (SIGUSR1).
+  */
   sleep(TIEMPO_ALIMENTAR_MASA_MADRE);
   masas_madres_por_etapa[ETAPAS_MASA_MADRE-1] += masas_madres_por_etapa[ETAPAS_MASA_MADRE-2];
   for(size_t i=ETAPAS_MASA_MADRE-2;i>0;i--){

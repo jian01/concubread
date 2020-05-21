@@ -244,7 +244,6 @@ FILE* safe_fopen(const char *filename, const char *mode){
   FILE* file = fopen(filename, mode);
   backup_errno();
   if(!file){
-    perror("safe_fopen: fopen");
     if(!restore_signals()) resource_fatal_error();
     restore_errno();
     return NULL;
@@ -265,7 +264,6 @@ int fpipe(FILE* pipefile[2]){
   int pipe_result = pipe(pipefd);
   backup_errno();
   if(pipe_result != 0){
-    perror("fpipe: pipe");
     if(!restore_signals()) resource_fatal_error();
     restore_errno();
     return -1;
