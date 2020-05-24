@@ -10,6 +10,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/mman.h>
+#include <string.h>
 #include "resource_manager.h"
 #include "debug_utils.h"
 #include "mensajes.h"
@@ -83,7 +84,7 @@ bool array_append_resize_if_needed(void** array, size_t* capacity, size_t quanti
   if(*capacity < quantity) return true;
   void* aux = realloc(*array, RESIZE_FACTOR*(*capacity)*size_of_element);
   if(!aux){
-    perror("array_append_resize_if_needed: realloc");
+    error(L"array_append_resize_if_needed: realloc (%s)", strerror(errno));
     return false;
   }
   *capacity *= RESIZE_FACTOR;
@@ -180,7 +181,7 @@ void* safe_malloc(size_t size){
   void* memory = malloc(size);
   backup_errno();
   if(!memory){
-    perror("safe_malloc: malloc");
+    error(L"safe_malloc: malloc (%s)", strerror(errno));
     if(!restore_signals()) resource_fatal_error();
     restore_errno();
     return NULL;
@@ -202,17 +203,17 @@ void* shared_malloc(size_t size, const char* shared_memory_file){
   block_signals();
   key_t clave = ftok(shared_memory_file, SHARED_MEMORY_INT);
   if(clave == -1){
-    perror("shared_malloc: ftok");
+  error(L"shared_malloc: ftok (%s)", strerror(errno));
     return NULL;
   }
   int shmId = shmget(clave, size, 0644|IPC_CREAT);
   if(shmId == -1){
-    perror("shared_malloc: shmget");
+    error(L"shared_malloc: shmget (%s)", strerror(errno));
     return NULL;
   }
   void* ptr = shmat(shmId,NULL,0);
   if ( ptr == (void *) -1 ) {
-    perror("shared_malloc: shmat");
+    error(L"shared_malloc: shmat (%s)", strerror(errno));
     shmctl(shmId, IPC_RMID, NULL);
     return NULL;
   }
@@ -270,7 +271,7 @@ int fpipe(FILE* pipefile[2]){
   }
   FILE* read = fdopen(pipefd[0], "r");
   if(!read){
-    perror("fpipe: read fdopen");
+    error(L"fpipe: read fdopen (%s)", strerror(errno));
     close(pipefd[0]);
     close(pipefd[1]);
     if(!restore_signals()) resource_fatal_error();
@@ -284,7 +285,7 @@ int fpipe(FILE* pipefile[2]){
   }
   FILE* write = fdopen(pipefd[1], "w");
   if(!write){
-    perror("fpipe: write fdopen");
+    error(L"fpipe: write fdopen (%s)", strerror(errno));
     fclose(read);
     close(pipefd[1]);
     if(!restore_signals()) resource_fatal_error();
@@ -306,13 +307,13 @@ FILE* create_lockfile(const char* name){
   block_signals();
   int lockfile_fd = open(name,O_CREAT|O_WRONLY,0777);
   if(lockfile_fd < 0){
-    perror("create_lockfile: open");
+    error(L"create_lockfile: open (%s)", strerror(errno));
     if(!restore_signals()) resource_fatal_error();
     return NULL;
   }
   FILE* lockfile = fdopen(lockfile_fd, "w");
   if(!lockfile){
-    perror("create_lockfile: fdopen");
+    error(L"create_lockfile: fdopen (%s)", strerror(errno));
     close(lockfile_fd);
     if(!restore_signals()) resource_fatal_error();
     return NULL;
@@ -352,7 +353,7 @@ pid_t safe_fork(bool attach){
   pid_t pid = fork();
   backup_errno();
   if(pid == -1){
-    perror("safe_fork: fork");
+    error(L"safe_fork: fork (%s)", strerror(errno));
     if(!restore_signals()) resource_fatal_error();
     restore_errno();
     return -1;
