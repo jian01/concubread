@@ -16,6 +16,8 @@ El resource manager tambien garantiza que todos los procesos respondan de forma 
 
 /*
 Inicializa los recursos necesarios por el resource manager, reservado su memoria y registrando el handler de SIGINT
+
+Inicializar el resource manager implica que por lo menos todos los forks se deben realizar utilizandolo.
 */
 bool initialize_resource_manager();
 
