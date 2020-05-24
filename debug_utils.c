@@ -53,8 +53,8 @@ bool print_error(const char* filename, int line_no, long pid, const wchar_t* for
 
   Devuelve true si la escritura fue exitosa
   */
-  block_signals();
   if(!debug_file) return true;
+  block_signals();
   va_list args;
   va_start(args, format);
 
@@ -77,8 +77,8 @@ bool print_info(const char* filename, int line_no, long pid, const wchar_t* form
 
   Devuelve true si la escritura fue exitosa
   */
-  block_signals();
   if(!debug_file) return true;
+  block_signals();
   va_list args;
   va_start(args, format);
 
@@ -102,8 +102,8 @@ bool print_debug(const char* filename, int line_no, long pid, const wchar_t* for
 
   Devuelve true si la escritura fue exitosa
   */
-  block_signals();
   if(!debug_file) return true;
+  block_signals();
   va_list args;
   va_start(args, format);
 

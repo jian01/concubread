@@ -20,6 +20,7 @@
 #define LOCK_ERROR_EXIT_CODE -5
 #define SIGNAL_SET_ERROR_EXIT_CODE -6
 #define CHILD_ERROR_EXIT_STATUS -20
+#define FORK_ERROR_EXIT_CODE -12
 
 
 
@@ -62,6 +63,7 @@ int especialista_masa_madre(FILE* pedidos_masa_read_end, FILE* especialista_masa
     debug(MASA_MADRE_ALIMENTADA, masas_madres_por_etapa[ETAPAS_MASA_MADRE-1]);
     pid_t father = getpid();
     pid_t signal_child_pid = safe_fork(false);
+    if(signal_child_pid<0) fatal_error_abort(FATAL_FORK, FORK_ERROR_EXIT_CODE);
     if(signal_child_pid == 0){
       if(!restore_signals()) fatal_error_abort(FATAL_SIGNAL_SET, SIGNAL_SET_ERROR_EXIT_CODE);
       signal_child(father, masas_madres_por_etapa[0], masas_madres_por_etapa[ETAPAS_MASA_MADRE-1]);
@@ -80,6 +82,7 @@ int especialista_masa_madre(FILE* pedidos_masa_read_end, FILE* especialista_masa
   // Alimentador masa madre
   pid_t father = getpid();
   pid_t signal_child_pid = safe_fork(false);
+  if(signal_child_pid<0) fatal_error_abort(FATAL_FORK, FORK_ERROR_EXIT_CODE);
   if(signal_child_pid == 0){
     return signal_child(father, masas_madres_por_etapa[0], masas_madres_por_etapa[ETAPAS_MASA_MADRE-1]);
   }

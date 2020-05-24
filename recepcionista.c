@@ -66,12 +66,12 @@ int recepcionista(FILE* pizzero_write_end, FILE* panadero_write_end, FILE* input
       int pedido_actual = shared_count->cant_pedidos;
       shared_count->cant_pedidos++;
       release_locked_file(fileno(shared_count_lockfile));
+      debug(RECEPCIONISTA_PIDIENDO_PIZZA, pedido_actual);
       int write_result = write(fileno(pizzero_write_end), buffer, DEFAULT_BUFFER_LEN);
       if(!acquire_exclusive_lock(fileno(shared_count_lockfile))) fatal_error_abort(FATAL_ACQUIRE_LOCK, LOCK_ERROR_EXIT_CODE);
       shared_count->pizzas.por_ordenar++;
 
       if(write_result > 0){
-        debug(RECEPCIONISTA_PIDIENDO_PIZZA, pedido_actual);
         shared_count->pizzas.por_ordenar--;
         shared_count->pizzas.por_entregar++;
         pizzas_procesadas++;
@@ -88,12 +88,12 @@ int recepcionista(FILE* pizzero_write_end, FILE* panadero_write_end, FILE* input
       int pedido_actual = shared_count->cant_pedidos;
       shared_count->cant_pedidos++;
       release_locked_file(fileno(shared_count_lockfile));
+      debug(RECEPCIONISTA_PIDIENDO_PAN, pedido_actual);
       int write_result = write(fileno(panadero_write_end), buffer, DEFAULT_BUFFER_LEN);
       if(!acquire_exclusive_lock(fileno(shared_count_lockfile))) fatal_error_abort(FATAL_ACQUIRE_LOCK, LOCK_ERROR_EXIT_CODE);
       shared_count->panes.por_ordenar++;
 
       if(write_result > 0){
-        debug(RECEPCIONISTA_PIDIENDO_PAN, pedido_actual);
         shared_count->panes.por_ordenar--;
         shared_count->panes.por_entregar++;
         panes_procesados++;

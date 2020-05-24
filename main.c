@@ -32,6 +32,7 @@
 #define UNABLE_TO_CLOSE_PIPE -8
 #define SHARED_MEMORY_ERROR -10
 #define LOCKFILE_ERROR -11
+#define FORK_ERROR_EXIT_CODE -12
 
 #define SHARED_MEMORY_FILE1 "/bin/bash"
 #define SHARED_MEMORY_FILE2 "/bin/cat"
@@ -75,6 +76,7 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
 
   // Inicializo especialista masa madre
   pid = safe_fork(true);
+  if(pid<0) fatal_error_abort(FATAL_FORK, FORK_ERROR_EXIT_CODE);
   if(pid==0){
     if(safe_fclose(repartidor_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
     if(safe_fclose(repartidor_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
@@ -91,6 +93,7 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
 
   // Inicializo repartidor
   pid = safe_fork(true);
+  if(pid<0) fatal_error_abort(FATAL_FORK, FORK_ERROR_EXIT_CODE);
   if(pid==0){
     if(safe_fclose(repartidor_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
     if(safe_fclose(pizzero_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
@@ -109,6 +112,7 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
   // Comienzo inicializacion de maestros pizzeros
   for(int i=0;i<pizzeros;i++){
     pid = safe_fork(true);
+    if(pid<0) fatal_error_abort(FATAL_FORK, FORK_ERROR_EXIT_CODE);
     if(pid==0){
       if(safe_fclose(repartidor_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
       if(safe_fclose(pizzero_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
@@ -126,6 +130,7 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
   // Comienzo inicializacion de maestros panaderos
   for(int i=0;i<panaderos;i++){
     pid = safe_fork(true);
+    if(pid<0) fatal_error_abort(FATAL_FORK, FORK_ERROR_EXIT_CODE);
     if(pid==0){
       if(safe_fclose(repartidor_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
       if(safe_fclose(panadero_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
@@ -143,6 +148,7 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
   // Comienzo inicialización de recepcionistas
   for(int i=0;i<recepcionistas;i++){
     pid = safe_fork(true);
+    if(pid<0) fatal_error_abort(FATAL_FORK, FORK_ERROR_EXIT_CODE);
     if(pid==0){
       if(safe_fclose(repartidor_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
       if(safe_fclose(repartidor_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);

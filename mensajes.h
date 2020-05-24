@@ -81,4 +81,5 @@
   #define FATAL_SIGNAL_SET "Error fatal al intentar setear un signal handler"
   #define FATAL_IGNORE_SIGNAL "Error fatal al restaurar signals"
   #define FATAL_SPRINTF "Error al realizar sprintf"
+  #define FATAL_FORK "Error al realizar fork"
 #endif

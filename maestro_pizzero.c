@@ -35,8 +35,8 @@ int maestro_pizzero(FILE* pizzero_read_end, FILE* repartidor_write_end,
   do {
     if(por_entregar > 0){
       if(sprintf(buffer, "%s%d", PIZZA_KEYWORD, por_entregar_ids[0]) < 0) fatal_error_abort(FATAL_SPRINTF, SPRINTF_ERROR_EXIT_CODE);
+      debug(ENTREGANDO_PIZZA, por_entregar_ids[0]);
       if(write(fileno(repartidor_write_end), buffer, DEFAULT_BUFFER_LEN) > 0){
-        debug(ENTREGANDO_PIZZA, por_entregar_ids[0]);
         por_entregar--;
         entregadas++;
         for(size_t i=0; i<MAXIMO_SIMULTANEO_POR_COCINERO-1; i++) por_entregar_ids[i] = por_entregar_ids[i+1];
