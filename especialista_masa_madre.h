@@ -10,7 +10,6 @@
   Devuelve 0 si fue exitoso, otro numero en caso contrario.
   */
 
-  int especialista_masa_madre(size_t* shared_especialista_pedidos, FILE* shared_especialista_pedidos_lock,
-    FILE* especialista_masas_write_end);
+  int especialista_masa_madre(FILE* pedidos_masa_read_end, FILE* especialista_masas_write_end);
 
 #endif

@@ -73,10 +73,13 @@ int safe_fclose(FILE *stream);
 Wrapper de fork que registra los procesos hijos
 
 Devuelve lo mismo que fork, no garantiza setear el errno como fork lo haria.
-Los procesos se registran para ser cerrados y liberados automaticamente con free_all_resources, por lo que
-un proceso hijo creado con esta llamada no puede sobrevivir al padre si este pretende usar el resource manager.
+Si attach es true:
+  Los procesos se registran para ser cerrados y liberados automaticamente con free_all_resources, por lo que
+  un proceso hijo creado con esta llamada no puede sobrevivir al padre.
+Si attach es false:
+  Permite que quien lo llame garantice el fin del proceso hijo, teniendo en cuenta que si no lo hace quedara corriendo
 */
-pid_t safe_fork();
+pid_t safe_fork(bool attach);
 
 /*
 Libera todos los recursos creados con el resource manager

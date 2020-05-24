@@ -346,7 +346,7 @@ int safe_fclose(FILE *stream){
   return result;
 }
 
-pid_t safe_fork(){
+pid_t safe_fork(bool attach){
   if(!global_resource_tracker) return -1;
   block_signals();
   pid_t pid = fork();
@@ -364,14 +364,16 @@ pid_t safe_fork(){
     if(!restore_signals()) resource_fatal_error();
     return 0;
   }
-  if(!array_append_resize_if_needed((void**)&global_resource_tracker->childs, &global_resource_tracker->child_capacity,
-    global_resource_tracker->child_quantity, sizeof(int))){
-      kill(pid, SIGKILL);
-      if(!restore_signals()) resource_fatal_error();
-      resource_fatal_error();
-    }
-  global_resource_tracker->childs[global_resource_tracker->child_quantity] = pid;
-  global_resource_tracker->child_quantity++;
+  if(attach){
+    if(!array_append_resize_if_needed((void**)&global_resource_tracker->childs, &global_resource_tracker->child_capacity,
+      global_resource_tracker->child_quantity, sizeof(int))){
+        kill(pid, SIGKILL);
+        if(!restore_signals()) resource_fatal_error();
+        resource_fatal_error();
+      }
+    global_resource_tracker->childs[global_resource_tracker->child_quantity] = pid;
+    global_resource_tracker->child_quantity++;
+  }
   if(!restore_signals()) resource_fatal_error();
   return pid;
 }

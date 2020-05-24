@@ -20,8 +20,7 @@
 
 
 int maestro_panadero(FILE* panadero_read_end, FILE* repartidor_write_end,
-                    FILE* especialista_masas_read_end,
-                    size_t* shared_especialista_pedidos, FILE* shared_especialista_pedidos_lock,
+                    FILE* especialista_masas_read_end, FILE* pedidos_especialista_write_end,
                     FILE* panadero_pipe_rd_lockfile, FILE* especialista_masa_rd_lockfile){
   /*
   Maestro panadero:
@@ -52,20 +51,21 @@ int maestro_panadero(FILE* panadero_read_end, FILE* repartidor_write_end,
         error(MAESTRO_PANADERO_ERROR_AL_ENTREGAR, por_entregar_ids[0]);
       }
     } else if(por_conseguir_masa_madre > 0){
-      if(!acquire_exclusive_lock(fileno(shared_especialista_pedidos_lock))) fatal_error_abort(FATAL_ACQUIRE_LOCK, LOCK_ERROR_EXIT_CODE);
-      *shared_especialista_pedidos = *shared_especialista_pedidos+1;
-      release_locked_file(fileno(shared_especialista_pedidos_lock));
-      if(!acquire_exclusive_lock(fileno(especialista_masa_rd_lockfile))) fatal_error_abort(FATAL_ACQUIRE_LOCK, LOCK_ERROR_EXIT_CODE);
-      read_result = read(fileno(especialista_masas_read_end), buffer, DEFAULT_BUFFER_LEN);
-      release_locked_file(fileno(especialista_masa_rd_lockfile));
-      if(read_result < 0) fatal_error_abort(FATAL_LECTURA, GETLINE_ERROR_EXIT_CODE);
-      if(read_result > 0 && strncmp(buffer, MASA_KEYWORD, MASA_KEYWORD_LEN) == 0){
-        debug(COCINANDO_PAN, por_entregar_ids[0], TIEMPO_COCCION_PANADERO);
-        sleep(TIEMPO_COCCION_PANADERO);
-        por_conseguir_masa_madre--;
-        por_entregar++;
-      } else if(read_result > 0){
-        error(ERROR_MENSAJE_NO_COMPRENDIDO, buffer);
+      if(write(fileno(pedidos_especialista_write_end), MASA_KEYWORD, DEFAULT_BUFFER_LEN) > 0){
+        if(!acquire_exclusive_lock(fileno(especialista_masa_rd_lockfile))) fatal_error_abort(FATAL_ACQUIRE_LOCK, LOCK_ERROR_EXIT_CODE);
+        read_result = read(fileno(especialista_masas_read_end), buffer, DEFAULT_BUFFER_LEN);
+        release_locked_file(fileno(especialista_masa_rd_lockfile));
+        if(read_result < 0) fatal_error_abort(FATAL_LECTURA, GETLINE_ERROR_EXIT_CODE);
+        if(read_result > 0 && strncmp(buffer, MASA_KEYWORD, MASA_KEYWORD_LEN) == 0){
+          debug(COCINANDO_PAN, por_entregar_ids[0], TIEMPO_COCCION_PANADERO);
+          sleep(TIEMPO_COCCION_PANADERO);
+          por_conseguir_masa_madre--;
+          por_entregar++;
+        } else if(read_result > 0){
+          error(ERROR_MENSAJE_NO_COMPRENDIDO, buffer);
+        }
+      } else {
+        error(MAESTRO_PANADERO_PEDIDO_MASA_ERROR);
       }
     } else {
       if(!acquire_exclusive_lock(fileno(panadero_pipe_rd_lockfile))) fatal_error_abort(FATAL_ACQUIRE_LOCK, LOCK_ERROR_EXIT_CODE);

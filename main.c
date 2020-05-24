@@ -44,6 +44,7 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
   FILE* pizzero_pipes[2];
   FILE* panadero_pipes[2];
   FILE* especialista_masa[2];
+  FILE* pedidos_masa[2];
 
   if(fpipe(pizzero_pipes)) fatal_error_abort(FATAL_ERROR_PIPE_OPEN, UNABLE_TO_OPEN_PIPE);
   FILE* pizzero_pipe_rd_lockfile = create_lockfile("lockfiles/pizzero_pipe_rd");
@@ -61,24 +62,20 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
   FILE* especialista_masa_rd_lockfile = create_lockfile("lockfiles/especialista_masa_pipe_rd");
   if(!especialista_masa_rd_lockfile) fatal_error_abort(FATAL_ERROR_LOCKFILE, LOCKFILE_ERROR);
 
+  if(fpipe(pedidos_masa)) fatal_error_abort(FATAL_ERROR_PIPE_OPEN, UNABLE_TO_OPEN_PIPE);
+
   pedidos_count_t* shared_count = shared_malloc(sizeof(pedidos_count_t), SHARED_MEMORY_FILE1);
   if(!shared_count) fatal_error_abort(FATAL_ERROR_SHARED_MEMORY, SHARED_MEMORY_ERROR);
   memset(shared_count,0,sizeof(pedidos_count_t));
   FILE* shared_count_lockfile = create_lockfile("lockfiles/shared_count");
   if(!shared_count_lockfile) fatal_error_abort(FATAL_ERROR_LOCKFILE, LOCKFILE_ERROR);
-  size_t* shared_especialista_pedidos = shared_malloc(sizeof(size_t), SHARED_MEMORY_FILE2);
-  if(!shared_especialista_pedidos) fatal_error_abort(FATAL_ERROR_SHARED_MEMORY, SHARED_MEMORY_ERROR);
-  *shared_especialista_pedidos = 0;
-  FILE* shared_especialista_pedidos_lock = create_lockfile("lockfiles/shared_especialista_pedidos");
-  if(!shared_especialista_pedidos_lock) fatal_error_abort(FATAL_ERROR_LOCKFILE, LOCKFILE_ERROR);
-  pid_t repartidor_pid;
-  pid_t especialista_masa_madre_pid;
+  pid_t pid;
 
   info(CONTRATANDO_ESPECIALISTA_MASA_MADRE);
 
   // Inicializo especialista masa madre
-  especialista_masa_madre_pid = safe_fork();
-  if(especialista_masa_madre_pid==0){
+  pid = safe_fork(true);
+  if(pid==0){
     if(safe_fclose(repartidor_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
     if(safe_fclose(repartidor_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
     if(safe_fclose(pizzero_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
@@ -86,14 +83,15 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
     if(safe_fclose(panadero_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
     if(safe_fclose(panadero_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
     if(safe_fclose(especialista_masa[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
-    return especialista_masa_madre(shared_especialista_pedidos, shared_especialista_pedidos_lock, especialista_masa[1]);
+    if(safe_fclose(pedidos_masa[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
+    return especialista_masa_madre(pedidos_masa[0], especialista_masa[1]);
   }
 
   info(CONTRATANDO_REPARTIDOR);
 
   // Inicializo repartidor
-  repartidor_pid = safe_fork();
-  if(repartidor_pid==0){
+  pid = safe_fork(true);
+  if(pid==0){
     if(safe_fclose(repartidor_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
     if(safe_fclose(pizzero_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
     if(safe_fclose(pizzero_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
@@ -101,6 +99,8 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
     if(safe_fclose(panadero_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
     if(safe_fclose(especialista_masa[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
     if(safe_fclose(especialista_masa[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
+    if(safe_fclose(pedidos_masa[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
+    if(safe_fclose(pedidos_masa[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
     return repartidor(repartidor_pipes[0], shared_count, shared_count_lockfile, repartidor_pipe_rd_lockfile);
   }
 
@@ -108,15 +108,16 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
 
   // Comienzo inicializacion de maestros pizzeros
   for(int i=0;i<pizzeros;i++){
-    pid_t pid = safe_fork();
+    pid = safe_fork(true);
     if(pid==0){
       if(safe_fclose(repartidor_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
       if(safe_fclose(pizzero_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
       if(safe_fclose(panadero_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
       if(safe_fclose(panadero_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
       if(safe_fclose(especialista_masa[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
-      return maestro_pizzero(pizzero_pipes[0], repartidor_pipes[1], especialista_masa[0], shared_especialista_pedidos,
-      shared_especialista_pedidos_lock, pizzero_pipe_rd_lockfile, especialista_masa_rd_lockfile);
+      if(safe_fclose(pedidos_masa[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
+      return maestro_pizzero(pizzero_pipes[0], repartidor_pipes[1], especialista_masa[0], pedidos_masa[1],
+        pizzero_pipe_rd_lockfile, especialista_masa_rd_lockfile);
     }
   }
 
@@ -124,15 +125,16 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
 
   // Comienzo inicializacion de maestros panaderos
   for(int i=0;i<panaderos;i++){
-    pid_t pid = safe_fork();
+    pid = safe_fork(true);
     if(pid==0){
       if(safe_fclose(repartidor_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
       if(safe_fclose(panadero_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
       if(safe_fclose(pizzero_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
       if(safe_fclose(pizzero_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
       if(safe_fclose(especialista_masa[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
-      return maestro_panadero(panadero_pipes[0], repartidor_pipes[1], especialista_masa[0], shared_especialista_pedidos,
-      shared_especialista_pedidos_lock, panadero_pipe_rd_lockfile, especialista_masa_rd_lockfile);
+      if(safe_fclose(pedidos_masa[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
+      return maestro_panadero(panadero_pipes[0], repartidor_pipes[1], especialista_masa[0], pedidos_masa[1],
+        panadero_pipe_rd_lockfile, especialista_masa_rd_lockfile);
     }
   }
 
@@ -140,7 +142,7 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
 
   // Comienzo inicialización de recepcionistas
   for(int i=0;i<recepcionistas;i++){
-    pid_t pid = safe_fork();
+    pid = safe_fork(true);
     if(pid==0){
       if(safe_fclose(repartidor_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
       if(safe_fclose(repartidor_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
@@ -148,6 +150,8 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
       if(safe_fclose(panadero_pipes[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
       if(safe_fclose(especialista_masa[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
       if(safe_fclose(especialista_masa[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
+      if(safe_fclose(pedidos_masa[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
+      if(safe_fclose(pedidos_masa[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
       return recepcionista(pizzero_pipes[1], panadero_pipes[1], input_file, shared_count, shared_count_lockfile);
     }
   }
@@ -159,12 +163,13 @@ int gerente(FILE* input_file, int recepcionistas, int pizzeros, int panaderos) {
   if(safe_fclose(panadero_pipes[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
   if(safe_fclose(especialista_masa[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
   if(safe_fclose(especialista_masa[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
+  if(safe_fclose(pedidos_masa[0])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
+  if(safe_fclose(pedidos_masa[1])) fatal_error_abort(FATAL_ERROR_PIPE_CLOSE, UNABLE_TO_CLOSE_PIPE);
 
   int status = 0;
   pid_t wpid;
   while ((wpid = wait(&status)) > 0){
     if(WEXITSTATUS(status) != 0) fatal_error_abort(FATAL_ERROR_CHILD, CHILD_ERROR_EXIT_STATUS);
-    if(wpid == repartidor_pid) kill(especialista_masa_madre_pid, SIGUSR1);
   }
   if(errno != ECHILD) fatal_error_abort(FATAL_ERROR_WAIT, CHILD_WAIT_ERROR_EXIT_CODE);
 

@@ -1,7 +1,7 @@
 # concubread
 
 Compilacion:
-`gcc -Wall -pedantic -g -D_POSIX_SOURCE -D_XOPEN_SOURCE=500 -std=c99 -o concubread *.c -lm`
+`gcc -Wall -g -D_POSIX_SOURCE -D_XOPEN_SOURCE=500 -std=c99 -o concubread *.c -lm`
 
 Uso:
 ```

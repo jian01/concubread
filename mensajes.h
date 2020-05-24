@@ -37,6 +37,7 @@
   #define MAESTRO_PIZZERO_ERROR_AL_ENTREGAR L"👨‍🍳🍕 Error al entregar pizza (pedido número %d) al repartidor, reintentando"
   #define MAESTRO_PIZZERO_STOP L"👨‍🍳🛑 No se cocinaran mas pedidos, pizzas cocinadas: %d"
   #define PIDIENDO_MASA_MADRE_PIZZA L"👨‍🍳🍕 Pidiendo masa madre para pizza (pedido número %d)"
+  #define MAESTRO_PIZZERO_PEDIDO_MASA_ERROR L"👨‍🍳🍕 Error al pedir masa madre"
   // Maestro panadero logs
   #define INICIANDO_MAESTRO_PANADERO L"👨‍🍳🍞 Iniciando maestro panadero"
   #define COCINANDO_PAN L"👨‍🍳🍞 Cocinando pan (pedido número %d), tiempo de coccion: %.3f"
@@ -44,6 +45,7 @@
   #define MAESTRO_PANADERO_ERROR_AL_ENTREGAR L"👨‍🍳🍞 Error al entregar pan (pedido número %d) al repartidor, reintentando"
   #define MAESTRO_PANADERO_STOP L"👨‍🍳🛑 No se cocinaran mas pedidos, panes cocinados: %d"
   #define PIDIENDO_MASA_MADRE_PAN L"👨‍🍳🍞 Pidiendo masa madre para pan (pedido número %d)"
+  #define MAESTRO_PANADERO_PEDIDO_MASA_ERROR L"👨‍🍳🍞 Error al pedir masa madre"
   // Especialista de masa madre
   #define INICIANDO_ESPECIALISTA_MASA_MADRE L"👨‍🔬🌾 Iniciando especialista de masa madre"
   #define ENTREGANDO_MASA_MADRE L"👨‍🔬🌾 Entregando masa madre 👨‍🍳"
