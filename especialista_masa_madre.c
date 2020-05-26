@@ -25,6 +25,9 @@
 
 
 void alimentar_masa_madre(size_t* masas_madres_por_etapa){
+  /*
+  Alimenta todas las masas madre moviendolas a t+1
+  */
   masas_madres_por_etapa[ETAPAS_MASA_MADRE-1] += masas_madres_por_etapa[ETAPAS_MASA_MADRE-2];
   for(size_t i=ETAPAS_MASA_MADRE-2;i>0;i--){
     masas_madres_por_etapa[i] = masas_madres_por_etapa[i-1];
@@ -33,6 +36,9 @@ void alimentar_masa_madre(size_t* masas_madres_por_etapa){
 }
 
 int signal_child(pid_t father_pid, size_t masas_por_alimentar, size_t masas_listas){
+  /*
+  Proceso temporizador que indica cuando alimentar la masa madre
+  */
   debug(ALIMENTANDO_MASA_MADRE, masas_por_alimentar, masas_listas);
   sleep(TIEMPO_ALIMENTAR_MASA_MADRE);
   free_all_resources();

@@ -23,6 +23,14 @@
 int maestro_pizzero(FILE* pizzero_read_end, FILE* repartidor_write_end,
                     FILE* especialista_masas_read_end, FILE* pedidos_especialista_write_end,
                     FILE* pizzero_pipe_rd_lockfile, FILE* especialista_masa_rd_lockfile){
+  /*
+  Maestro pizzero:
+
+  El maestro pizzero recibe los pedidos del recepcionista y hornea las pizzas a medida el maestro de masa madre le provee la masa.
+  El tiempo de horneado es una variable aleatoria de distribucion uniforme, cuando termina entrega la pizza al repartidor
+
+  Devuelve 0 como exit code si fue exitoso, otro numero en caso contrario
+  */
   char* buffer = (char *)safe_malloc(DEFAULT_BUFFER_LEN * sizeof(char));
   int por_entregar_ids[MAXIMO_SIMULTANEO_POR_COCINERO];
   size_t por_entregar = 0;

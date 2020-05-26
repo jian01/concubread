@@ -62,6 +62,13 @@ void restore_errno(){
 }
 
 bool block_signals(){
+  /*
+  Las operaciones cuya atomicidad se vean afectadas por señales y sea crucial para un correcto
+  funcionamiento garantizar que no deben ser interrumpidas deben llamar antes a la funcion block_signal garantizando se que bloquearan
+  todas las señales que estan permitidas bloquear (todas menos SIGKILL y SIGTERM).
+
+  Devuelve true si es exitosa.
+  */
   if(!global_resource_tracker) return false;
   sigset_t mask;
   sigfillset(&mask);
@@ -69,18 +76,29 @@ bool block_signals(){
 }
 
 bool restore_signals(){
+  /*
+  Vuelve las señales al estado previo a la llamada de block_signals, por lo que no se pierden mascaras que se pudieran tener.
+
+  Devuelve true si fue exitosa.
+  */
   if(!global_resource_tracker) return false;
   sigdelset(&global_resource_tracker->previous_mask, SIGINT);
   return sigprocmask(SIG_SETMASK, &global_resource_tracker->previous_mask, NULL) == 0;
 }
 
 void handle_sigint(int sig){
+  /*
+  SIGINT handler
+  */
   fatal(FATAL_SIGINT);
   free_all_resources();
   exit(0);
 }
 
 bool array_append_resize_if_needed(void** array, size_t* capacity, size_t quantity, size_t size_of_element){
+  /*
+  Redimensiona un arreglo dinamico de ser necesario
+  */
   if(*capacity < quantity) return true;
   void* aux = realloc(*array, RESIZE_FACTOR*(*capacity)*size_of_element);
   if(!aux){
@@ -93,6 +111,9 @@ bool array_append_resize_if_needed(void** array, size_t* capacity, size_t quanti
 }
 
 bool register_file_pointer(FILE* file){
+  /*
+  Registra un FILE*
+  */
   if(!file) return false;
   if(!global_resource_tracker) return false;
   if(!array_append_resize_if_needed((void**)&global_resource_tracker->opened_files, &global_resource_tracker->file_capacity,
@@ -103,6 +124,11 @@ bool register_file_pointer(FILE* file){
 }
 
 bool initialize_resource_manager(){
+  /*
+  Inicializa los recursos necesarios por el resource manager, reservado su memoria y registrando el handler de SIGINT
+
+  Inicializar el resource manager implica que por lo menos todos los forks se deben realizar utilizandolo.
+  */
   block_signals();
   if(global_resource_tracker) return false;
   global_resource_tracker = malloc(sizeof(resource_tracker_t));
@@ -176,6 +202,14 @@ bool initialize_resource_manager(){
 }
 
 void* safe_malloc(size_t size){
+  /*
+  Wrapper de malloc que aloca la memoria pero ademas registra
+
+  Devuelve un puntero a la memoria solicitada o NULL en caso de error.
+  No se garantiza que errno cumpla las mismas condiciones que malloc.
+  No tiene un free, debe ser liberada con free_all_resources o
+  en caso de querer liberar memoria sin liberar todo, usar directamente la syscall malloc.
+  */
   if(!global_resource_tracker) return NULL;
   block_signals();
   void* memory = malloc(size);
@@ -199,6 +233,12 @@ void* safe_malloc(size_t size){
 }
 
 void* shared_malloc(size_t size, const char* shared_memory_file){
+  /*
+  Función análoga a malloc pero para memoria compartida
+
+  Devuelve un puntero a la memoria solicitada o NULL en caso de error.
+  La unica forma correcta de liberar estos recursos es con free_all_resources
+  */
   if(!global_resource_tracker) return NULL;
   block_signals();
   key_t clave = ftok(shared_memory_file, SHARED_MEMORY_INT);
@@ -240,6 +280,13 @@ void* shared_malloc(size_t size, const char* shared_memory_file){
 }
 
 FILE* safe_fopen(const char *filename, const char *mode){
+  /*
+  Wrapper de fopen para abrir archivos
+
+  Devuelve NULL en caso de error, un FILE* si fue exitosa.
+  se garantiza que errno cumpla las mismas condiciones que fopen.
+  Se pueden cerrar con safe_fclose
+  */
   if(!global_resource_tracker) return NULL;
   block_signals();
   FILE* file = fopen(filename, mode);
@@ -328,6 +375,11 @@ FILE* create_lockfile(const char* name){
 }
 
 int safe_fclose(FILE *stream){
+  /*
+  Libera cualquiera de los FILE* creados con el resource manager, no asi si fueron creados en otro lado
+
+  Devuelve -1 si fallo, 0 sino, no garantiza que errno cumpla lo mismo que fclose.
+  */
   if(!global_resource_tracker) return -1;
   block_signals();
   size_t i = 0;
@@ -348,6 +400,16 @@ int safe_fclose(FILE *stream){
 }
 
 pid_t safe_fork(bool attach){
+  /*
+  Wrapper de fork que registra los procesos hijos
+
+  Devuelve lo mismo que fork, no garantiza setear el errno como fork lo haria.
+  Si attach es true:
+    Los procesos se registran para ser cerrados y liberados automaticamente con free_all_resources, por lo que
+    un proceso hijo creado con esta llamada no puede sobrevivir al padre.
+  Si attach es false:
+    Permite que quien lo llame garantice el fin del proceso hijo, teniendo en cuenta que si no lo hace quedara corriendo
+  */
   if(!global_resource_tracker) return -1;
   block_signals();
   pid_t pid = fork();
@@ -380,6 +442,20 @@ pid_t safe_fork(bool attach){
 }
 
 void free_all_resources(){
+  /*
+  Libera todos los recursos creados con el resource manager
+
+  1. Mata a todos los hijos abiertos, liberando sus recursos registrados en el resource manager.
+  Esto lo hace para todos los hijos si se inicializo el resource manager alguna vez, sin importar si fueron creados con safe_fork o fork.
+
+  2. Libera todo lo que fuera alocado con safe_malloc
+
+  3. Cierra todos los archivos, pipes o lockfiles que fueran abiertos con el resource manager pero no liberados con safe_fclose.
+
+  4. Libera toda la memoria compartida alguna vez creada
+
+  5. Libera todos los recursos asociados al resource manager
+  */
   if(!global_resource_tracker) return;
   block_signals();
   for(size_t i=0; i<global_resource_tracker->child_quantity; i++){

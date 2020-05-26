@@ -15,7 +15,7 @@ Especialista masa madre: Debe alimentar continuamente en intervalos periódicos 
 
 ## Casos de uso
 
-
+![](casos_de_uso.png)
 
 ## Resolución del problema
 
